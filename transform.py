@@ -35,3 +35,15 @@ def blockwiseIDCT(image, threshold):
 
 def normalize(min, max, values):
     return (values - np.min(values)) / np.ptp(values)
+
+def swap_rows(matrix, destinations):
+    for i in range(0, destinations.shape[0]):
+        d = destinations[i]
+        matrix[[i, d]] = matrix[[d, i]]
+    return matrix
+
+def swap_columns(matrix, destinations):
+    for i in range(0, destinations.shape[0]):
+        d = destinations[i]
+        matrix[:,[i, d]] = matrix[:,[d, i]]
+    return matrix
