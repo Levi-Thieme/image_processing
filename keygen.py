@@ -35,13 +35,16 @@ def fractional_to_binary(number, max_bits):
         i += 1
     return binary
 
+def fto_bin(number, bits):
+    return fractional_to_binary(get_fractional(number), bits);
+
 def key_from_partitions(x0, y0, r, T, R):
     key = np.empty([256], dtype=np.uint8)
-    key[0:52] = x0
-    key[52:104] = y0
-    key[104:156] = r
-    key[156:208] = T
-    key[208:256] = R
+    key[0:52] = fto_bin(x0, 52)
+    key[52:104] = fto_bin(y0, 52)
+    key[104:156] = fto_bin(r, 52)
+    key[156:208] = fto_bin(T, 52)
+    key[208:256] = fto_bin(x0, 48)
     return key
 
 def sum_and_divide(key, dividend):
@@ -50,20 +53,12 @@ def sum_and_divide(key, dividend):
         x += k * 2^(i-1)
     return x / dividend
 
-def generate_key(x0, y0, r, T, R):
-    iterations = int(round(R))
-    dividend = 2^52
-    x0 = key_partition(fractional_to_binary(get_fractional(x0), 52), dividend)
-    y0 = key_partition(fractional_to_binary(get_fractional(y0), 52), dividend)
-    r = key_partition(fractional_to_binary(get_fractional(r), 52), dividend)
-    T = key_partition(fractional_to_binary(get_fractional(T), 52), dividend)
-    dividend = 2^48
-    R = key_partition(fractional_to_binary(get_fractional(R), 48), dividend)
-    for i in range(1, iterations):
-        x0[i] = initial_state_x(T, x0, i)
-        y0[i] = initial_state_y(T, y0, i)
-        r[i] = initial_state_y(T, r, i)
-    return key_from_partitions(x0, y0, r, T, R)
+def generate_key(x0, y0, r, T, iterations):
+    x0 = get_fractional(x0)
+    y0 = get_fractional(y0)
+    r = get_fractional(r)
+    T = get_fractional(T)
+    return key_from_partitions(x0, y0, r, T, iterations)
 
 def initial_states(T, x0, R):
     states = np.zeros(R)
@@ -77,8 +72,11 @@ def initial_states_r(T, r, R):
         states[i-1] = initial_state_r(T, r, i)
     return states
 
-def create_key(frequencies, x0=0.1, y0=0.2, r=1.12, system_constant=21):
+def create_key_and_init_states(frequencies, x0=0.1, y0=0.2, r=1.12, system_constant=21):
     sum = sum_frequencies(frequencies)
     T = control_parameter(sum, system_constant, x0)
-    R = iterations(sum)
-    return generate_key(x0, y0, r, T, R)
+    R = int(round(iterations(sum)))
+    x_init_states = initial_states(T, x0, R)
+    y_init_states = initial_states(T, y0, R)
+    r_init_states = initial_states_r(T, r, R)
+    return [x_init_states, y_init_states, r_init_states, generate_key(x0, y0, r, T, R)]

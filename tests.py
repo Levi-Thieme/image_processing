@@ -75,18 +75,15 @@ class Test_keygen(unittest.TestCase):
 
 
     def test_key_from_partitions(self):
-        x0 = np.empty([52], dtype=np.uint8)
-        x0[5] = 21
-        y0 = np.empty([52], dtype=np.uint8)
-        y0[27] = 3
-        r = np.empty([52], dtype=np.uint8)
-        r[34] = 9
-        T = np.empty([52], dtype=np.uint8)
-        T[2] = 64
-        R = np.empty([48], dtype=np.uint8)
-        R[8] = 50
+        x0 = keygen.fto_bin(1, 52)
+        y0 = keygen.fto_bin(2, 52)
+        r = keygen.fto_bin(3, 52)
+        T = keygen.fto_bin(4, 52)
+        R = keygen.fto_bin(5, 48)
         expected = np.concatenate((x0, y0, r, T, R), axis=0)
-        actual = keygen.key_from_partitions(x0, y0, r, T, R)
+
+        actual = keygen.key_from_partitions(1, 2, 3, 4, 5)
+
         self.assertTrue(np.array_equal(expected, actual))
 
     def test_log_map_sequences(self):
@@ -138,6 +135,19 @@ class Test_keygen(unittest.TestCase):
         destinations = np.array([1, 2])
         actual = transform.swap_columns(matrix, destinations)
         self.assertTrue(np.array_equal(expected, actual))
+
+    def test_henon_map(self):
+        a = 1.4
+        b = 0.3
+        x0 = 2
+        y0 = 3
+        x1 = 1 - a * (x0 * x0) + y0
+        y1 = b * y0
+        expected = np.array([x1, y1])
+
+        actual = chaos.henon_map(x0, y0, a, b)
+
+        self.assertTrue(np.allclose(expected, actual))
 
 if __name__ == "__main__":
     unittest.main()
